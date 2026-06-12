@@ -52,7 +52,9 @@ def expand_query(query: str):
     synonyms = {
         "credit card": ["wallet", "payments", "cashless", "card", "prepaid", "visa", "debit", "banking", "transaction"],
         "dresses": ["apparel", "romance", "novels", "luxury", "lifestyle", "fashion", "retail", "dresses", "clothing"],
-        "educational": ["school", "kids", "children", "lessons", "education", "books", "edtech", "learning"]
+        "educational": ["school", "kids", "children", "lessons", "education", "books", "edtech", "learning"],
+        "health": ["medical", "healthcare", "biotech", "clinical", "doctor", "wellness", "fitness", "patient"],
+        "delivery": ["logistics", "shipping", "courier", "transport", "on-demand", "warehouse", "supply-chain"]
     }
     for term, syns in synonyms.items():
         if term in query_lower:
@@ -60,6 +62,8 @@ def expand_query(query: str):
     # Check individual words as well
     if "fintech" in query_lower or "finance" in query_lower:
         expanded_terms.extend(["wallet", "payments", "visa", "card"])
+    if "retail" in query_lower or "ecommerce" in query_lower:
+        expanded_terms.extend(["shop", "store", "commerce", "sales", "merchant"])
     return " ".join(list(set(expanded_terms)))
 
 def get_failed_startups_info(query: str, groq_api_key: str):
