@@ -1,0 +1,17 @@
+google-genai
+duckduckgo-search
+fastapi
+flask
+uvicorn[standard]
+pydantic
+python-dotenv
+requests
+langchain
+langchain-community
+langchain-huggingface
+langchain-groq
+sentence-transformers
+chromadb
+langchain-chroma
+pandas
+flask-cors
