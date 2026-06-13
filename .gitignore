@@ -3,3 +3,7 @@ __pycache__/
 .env
 venv/
 .input/
+*.log
+*.txt
+!requirements.txt
+.git_old/

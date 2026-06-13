@@ -1,0 +1,46 @@
+{
+  "summary": {
+    "avg_retrieval_hit_rate": 0.2222222222222222,
+    "avg_faithfulness": 0.4166666666666667,
+    "avg_relevance": 0.5333333333333333,
+    "overall_accuracy": 0.39074074074074067
+  },
+  "cases": [
+    {
+      "query": "retail fashion platform for dresses",
+      "retrieved_count": 3,
+      "hit_rate": 0.3333333333333333,
+      "faithfulness": 0.75,
+      "relevance": 0.8,
+      "details": {
+        "hits": 1,
+        "faith_reason": "The summary mentions 'retail fashion platform for dresses space' which is not explicitly stated in the retrieved records. However, it can be inferred from the records. The summary also mentions 'high costs' as a reason for Spring's failure, but the retrieved records only mention 'high costs' as a general learning, not a specific reason for failure.",
+        "rel_reason": "The summary explains typical failure reasons in the retail fashion platform for dresses niche, specifically mentioning low retention, high costs, and low margins as common issues."
+      }
+    },
+    {
+      "query": "educational apps for children",
+      "retrieved_count": 3,
+      "hit_rate": 0.3333333333333333,
+      "faithfulness": 0.0,
+      "relevance": 0.8,
+      "details": {
+        "hits": 1,
+        "faith_reason": "The summary mentions 'kids' ed needs scale' which is a direct quote from Homer's learnings, but it's presented as a general statement about the space, and also mentions 'kids' tech can be brutal' which is a direct quote from Zuuka's learnings, but it's presented as a general statement about the space. Additionally, the summary mentions 'losing to Epic!' which is a direct quote from Homer's and Zuuka's why failed, but it's presented as a general statement about the reason for failure. The summary also implies that Airy Labs failed due to a lack of focus, but it's not explicitly stated in the retrieved records that this is a general trend in the space.",
+        "rel_reason": "The summary explains typical failure reasons in the educational apps for children niche, specifically lack of focus and need for scale, but could be more comprehensive."
+      }
+    },
+    {
+      "query": "fintech credit card for startups",
+      "retrieved_count": 3,
+      "hit_rate": 0.0,
+      "faithfulness": 0.5,
+      "relevance": 0.0,
+      "details": {
+        "hits": 0,
+        "faith_reason": "The summary mentions 'fintech credit card for startups space' which is not present in the retrieved records. It also implies that Seed failed due to needing scale, but the retrieved records state that Seed failed due to losing to Brex and closed, which is a different reason.",
+        "rel_reason": "Eval failed after retries"
+      }
+    }
+  ]
+}

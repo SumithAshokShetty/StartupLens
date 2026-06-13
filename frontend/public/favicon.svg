@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <!-- Define the gradient from vibrant blue to deep violet/purple -->
+    <linearGradient id="logo-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0052FF" />
+      <stop offset="100%" stop-color="#7B2CBF" />
+    </linearGradient>
+  </defs>
+
+  <!-- Magnifying Glass Handle -->
+  <line x1="68" y1="72" x2="85" y2="89" stroke="url(#logo-grad)" stroke-width="8" stroke-linecap="round" />
+
+  <!-- Magnifying Glass Ring with precise gap at top-right using stroke-dasharray/dashoffset -->
+  <circle cx="48" cy="52" r="27" fill="none" stroke="url(#logo-grad)" stroke-width="7" stroke-dasharray="130 40" stroke-dashoffset="-12" stroke-linecap="round" />
+
+  <!-- Bar Charts inside the lens -->
+  <rect x="34" y="58" width="6" height="14" rx="3" fill="url(#logo-grad)" />
+  <rect x="44" y="47" width="6" height="25" rx="3" fill="url(#logo-grad)" />
+  <rect x="54" y="38" width="6" height="34" rx="3" fill="url(#logo-grad)" />
+
+  <!-- Trend Line inside the lens -->
+  <line x1="28" y1="62" x2="60" y2="35" stroke="url(#logo-grad)" stroke-width="3" stroke-linecap="round" />
+  
+  <!-- Trend Line Dots -->
+  <circle cx="34" cy="57" r="3.5" fill="url(#logo-grad)" />
+  <circle cx="45" cy="48" r="3.5" fill="url(#logo-grad)" />
+  <circle cx="56" cy="39" r="3.5" fill="url(#logo-grad)" />
+
+  <!-- Rocket flying out of the magnifying glass -->
+  <g transform="translate(67, 27) rotate(45)">
+    <!-- Rocket Fins -->
+    <path d="M -4,2 L -9,8 C -10,9.5 -8.5,11.5 -6.5,11 L -4,9 Z" fill="url(#logo-grad)" />
+    <path d="M 4,2 L 9,8 C 10,9.5 8.5,11.5 6.5,11 L 4,9 Z" fill="url(#logo-grad)" />
+    
+    <!-- Rocket Body -->
+    <path d="M -4,3 C -4,-4 -2,-11 0,-15 C 2,-11 4,-4 4,3 C 4,7 3,9 0,9 C -3,9 -4,7 -4,3 Z" fill="url(#logo-grad)" />
+    
+    <!-- Rocket Window -->
+    <circle cx="0" cy="-2" r="2.2" fill="#ffffff" />
+    
+    <!-- Outer Thruster / Flame -->
+    <path d="M -3.5,9 C -5,13 -3,17 0,20 C 3,17 5,13 3.5,9 Z" fill="url(#logo-grad)" opacity="0.8" />
+  </g>
+</svg>
