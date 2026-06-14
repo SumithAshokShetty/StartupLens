@@ -138,7 +138,3 @@ To ensure high-quality and structured startup validation, StartupLens delegates 
 2. **Web Researcher Agent**: Operates real-time Google Search grounding tools to cross-reference trends, pull current market share stats, and discover active competitors.
 3. **Failure Analyst Agent**: Summarizes context-specific historical startup failure details and generates preventative action checklists based on RAG results.
 
----
-
-## 📄 License
-Distributed under the MIT License. See `LICENSE` for more information.
