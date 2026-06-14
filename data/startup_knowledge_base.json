@@ -1,0 +1,83 @@
+{
+  "99dresses": {
+    "Name": "99dresses",
+    "Sector": "Retail Trade",
+    "Years of Operation": "2010 - 2013",
+    "What They Did": "An online fashion platform allowing users to trade dresses and fashion items.",
+    "Cash Burned": "$1.2M raised",
+    "Why They Failed": "High customer acquisition costs, low retention, and failure of a crucial funding round.",
+    "Takeaway": "Balance growth with unit economics and secure backup funding."
+  },
+  "AllRomance": {
+    "Name": "AllRomance",
+    "Sector": "Retail Trade",
+    "Years of Operation": "2006 - 2016",
+    "What They Did": "E-book retailer specializing in romance novels.",
+    "Cash Burned": "$1M raised",
+    "Why They Failed": "Slow adaptation to Kindle/Amazon ecosystem and unsustainable royalty payouts leading to severe financial losses.",
+    "Takeaway": "Adapt quickly to platform changes and control margins."
+  },
+  "Ahalife": {
+    "Name": "Ahalife",
+    "Sector": "Retail Trade",
+    "Years of Operation": "2010 - 2017",
+    "What They Did": "Curated luxury goods and fashion marketplace.",
+    "Cash Burned": "$20M raised",
+    "Why They Failed": "High marketing costs to acquire luxury buyers and inability to defend its niche against Amazon.",
+    "Takeaway": "Luxury niches require high organic retention to sustain high acquisition costs."
+  },
+  "Airy Labs": {
+    "Name": "Airy Labs",
+    "Sector": "Information",
+    "Years of Operation": "2010 - 2012",
+    "What They Did": "Educational mobile games and apps for children.",
+    "Cash Burned": "$1.5M raised",
+    "Why They Failed": "Rapid cash burn during a chaotic product sprint, launching too many games without focus or product-market fit.",
+    "Takeaway": "Focus on a single high-quality core product before scaling."
+  },
+  "Codeacademy": {
+    "Name": "Codeacademy",
+    "Sector": "Information",
+    "Years of Operation": "2011 - 2022",
+    "What They Did": "Online interactive coding lessons and technical education platform.",
+    "Cash Burned": "$42.5M raised",
+    "Why They Failed": "Acquired in 2021 and closed in 2022 due to failure of free-tier users to convert to paid subscriptions and intense competition from Coursera.",
+    "Takeaway": "Freemium models must have clear paths to monetization."
+  },
+  "Edmodo": {
+    "Name": "Edmodo",
+    "Sector": "Information",
+    "Years of Operation": "2008 - 2021",
+    "What They Did": "Social learning and educational platform for K-12 students and teachers.",
+    "Cash Burned": "$45M raised",
+    "Why They Failed": "Monetization struggles and inability to compete with Google Classroom and Zoom during the remote learning pivot.",
+    "Takeaway": "Platforms need a monetization strategy that doesn't rely purely on ad revenue or school budgets."
+  },
+  "Brex": {
+    "Name": "Brex",
+    "Sector": "Finance and Insurance",
+    "Years of Operation": "2017 - Present (Active)",
+    "What They Did": "Corporate credit cards and cash management for startups.",
+    "Cash Burned": "$1.5B raised",
+    "Why They Failed": "Included in benchmark for comparison. High cash burn rate and credit risk from early-stage startups.",
+    "Takeaway": "Credit risk and underwriting standards must be robust when serving high-risk startup clients."
+  },
+  "Clinkle": {
+    "Name": "Clinkle",
+    "Sector": "Finance and Insurance",
+    "Years of Operation": "2011 - 2016",
+    "What They Did": "Mobile wallet and payment app.",
+    "Cash Burned": "$30M raised",
+    "Why They Failed": "Massive overhype and failure to launch a viable product before being beaten by Apple Pay and PayPal.",
+    "Takeaway": "Build a working product and validate with users before spending heavily on marketing."
+  },
+  "Cardless": {
+    "Name": "Cardless",
+    "Sector": "Finance and Insurance",
+    "Years of Operation": "2019 - Present (Active)",
+    "What They Did": "Credit cards and co-branded card programs for brands and startups.",
+    "Cash Burned": "$50M raised",
+    "Why They Failed": "Included in benchmark for comparison. High cost of customer acquisition and complexity of managing bank partnership compliance.",
+    "Takeaway": "Fintechs must navigate regulatory compliance and bank partnerships carefully to scale."
+  }
+}

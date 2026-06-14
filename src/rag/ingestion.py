@@ -1,11 +1,11 @@
 import os
+import shutil
 import pandas as pd
 from langchain_core.documents import Document
-from langchain_huggingface import HuggingFaceEmbeddings
+from src.rag.config import CSV_DIR, CHROMA_DB_DIR
+from src.rag.embeddings import get_embeddings
+from src.rag.enrichment import MetadataProvider
 from langchain_chroma import Chroma
-
-CSV_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "CSV")
-CHROMA_DB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "chroma")
 
 def load_documents_from_csvs():
     documents = []
@@ -13,13 +13,13 @@ def load_documents_from_csvs():
         print(f"Directory {CSV_DIR} does not exist.")
         return documents
 
-    # Read sector-specific files first, then general Startup Failures.csv
     all_files = os.listdir(CSV_DIR)
     sector_files = [f for f in all_files if f.endswith(".csv") and f != "Startup Failures.csv"]
     general_file = "Startup Failures.csv" if "Startup Failures.csv" in all_files else None
     
     files_to_process = sector_files + ([general_file] if general_file else [])
     processed_startup_names = set()
+    enricher = MetadataProvider()
 
     def clean_val(val):
         if pd.isna(val):
@@ -33,7 +33,6 @@ def load_documents_from_csvs():
         file_path = os.path.join(CSV_DIR, filename)
         try:
             df = pd.read_csv(file_path)
-            # Ensure columns are cleaned
             df.columns = [c.strip() for c in df.columns]
             
             for _, row in df.iterrows():
@@ -42,7 +41,7 @@ def load_documents_from_csvs():
                     continue
                 
                 name_lower = name.lower()
-                # Deduplication logic: Only skip if this is the generic file and we already have a detailed record
+                # Deduplication: only skip if generic file and we already have processed it
                 if filename == "Startup Failures.csv" and name_lower in processed_startup_names:
                     continue
                 
@@ -52,33 +51,6 @@ def load_documents_from_csvs():
                 raised = clean_val(row.get('How Much They Raised') or row.get('Cash Burned', ''))
                 why = clean_val(row.get('Why They Failed') or row.get('Why they failed', ''))
                 takeaway = clean_val(row.get('Takeaway') or row.get('Learnings', ''))
-                
-                # Check if this row is rich or generic
-                is_generic = not (what or raised or why or takeaway)
-                
-                # Mark as processed if it's rich
-                if not is_generic:
-                    processed_startup_names.add(name_lower)
-                
-                # Construct natural language narrative
-                narrative_parts = []
-                if sector:
-                    narrative_parts.append(f"{name} was a startup in the {sector} sector.")
-                else:
-                    narrative_parts.append(f"{name} was a startup company.")
-                
-                if years:
-                    narrative_parts.append(f"It operated for {years}.")
-                if what:
-                    narrative_parts.append(f"The company worked on: {what}.")
-                if raised:
-                    narrative_parts.append(f"They raised or burned approximately {raised}.")
-                if why:
-                    narrative_parts.append(f"Ultimately, the company failed and shut down because {why}.")
-                if takeaway:
-                    narrative_parts.append(f"A key learning from their failure is: {takeaway}.")
-                
-                page_content = " ".join(narrative_parts)
                 
                 metadata = {
                     "source": filename,
@@ -91,29 +63,96 @@ def load_documents_from_csvs():
                     "learnings": takeaway
                 }
                 
+                # Enrich metadata using MetadataProvider
+                metadata = enricher.enrich_record(name, metadata)
+                
+                # Construct page content from enriched metadata
+                narrative_parts = []
+                name_val = metadata.get("name")
+                sector_val = metadata.get("sector")
+                years_val = metadata.get("years_of_operation")
+                what_val = metadata.get("what_they_did")
+                raised_val = metadata.get("cash_burned")
+                why_val = metadata.get("failure_analysis")
+                takeaway_val = metadata.get("learnings")
+
+                if sector_val:
+                    narrative_parts.append(f"{name_val} was a startup in the {sector_val} sector.")
+                else:
+                    narrative_parts.append(f"{name_val} was a startup company.")
+                
+                if years_val:
+                    narrative_parts.append(f"It operated for {years_val}.")
+                if what_val:
+                    narrative_parts.append(f"The company worked on: {what_val}.")
+                if raised_val:
+                    narrative_parts.append(f"They raised or burned approximately {raised_val}.")
+                if why_val:
+                    narrative_parts.append(f"Ultimately, the company failed and shut down because {why_val}.")
+                if takeaway_val:
+                    narrative_parts.append(f"A key learning from their failure is: {takeaway_val}.")
+                
+                page_content = " ".join(narrative_parts)
                 documents.append(Document(page_content=page_content, metadata=metadata))
+                processed_startup_names.add(name_lower)
         except Exception as e:
             print(f"Error reading {filename}: {e}")
+
+    # Inject startups from knowledge base that are not in the CSVs
+    kb_startups = enricher.get_all_kb_startups()
+    for startup in kb_startups:
+        name_lower = startup["name"].lower()
+        if name_lower not in processed_startup_names:
+            print(f"Injecting missing startup from knowledge base: {startup['name']}")
+            metadata = {
+                "source": "knowledge_base_json",
+                "name": startup["name"],
+                "sector": startup["sector"],
+                "years_of_operation": startup["years_of_operation"],
+                "what_they_did": startup["what_they_did"],
+                "cash_burned": startup["cash_burned"],
+                "failure_analysis": startup["failure_analysis"],
+                "learnings": startup["learnings"]
+            }
+            
+            narrative_parts = []
+            if startup["sector"]:
+                narrative_parts.append(f"{startup['name']} was a startup in the {startup['sector']} sector.")
+            else:
+                narrative_parts.append(f"{startup['name']} was a startup company.")
+            
+            if startup["years_of_operation"]:
+                narrative_parts.append(f"It operated for {startup['years_of_operation']}.")
+            if startup["what_they_did"]:
+                narrative_parts.append(f"The company worked on: {startup['what_they_did']}.")
+            if startup["cash_burned"]:
+                narrative_parts.append(f"They raised or burned approximately {startup['cash_burned']}.")
+            if startup["failure_analysis"]:
+                narrative_parts.append(f"Ultimately, the company failed and shut down because {startup['failure_analysis']}.")
+            if startup["learnings"]:
+                narrative_parts.append(f"A key learning from their failure is: {startup['learnings']}.")
+            
+            page_content = " ".join(narrative_parts)
+            documents.append(Document(page_content=page_content, metadata=metadata))
+            processed_startup_names.add(name_lower)
             
     return documents
 
 def ingest_data():
-    print("Loading documents from CSVs...")
+    print("Loading documents from CSVs and Knowledge Base...")
     docs = load_documents_from_csvs()
-    print(f"Loaded {len(docs)} records from CSV files.")
+    print(f"Loaded {len(docs)} documents.")
     
     if not docs:
         print("No documents to ingest. Aborting.")
         return
 
-    print("Initializing HuggingFace embeddings (all-MiniLM-L6-v2)...")
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    print("Initializing HuggingFace BGE Embeddings...")
+    embeddings = get_embeddings()
     
     print("Creating/updating Chroma vector store...")
     os.makedirs(os.path.dirname(CHROMA_DB_DIR), exist_ok=True)
     
-    # Remove existing vector store if present to prevent mixing old and new embeddings formats
-    import shutil
     if os.path.exists(CHROMA_DB_DIR):
         print(f"Removing old vector store directory at {CHROMA_DB_DIR}")
         shutil.rmtree(CHROMA_DB_DIR)
@@ -127,4 +166,3 @@ def ingest_data():
 
 if __name__ == "__main__":
     ingest_data()
-
