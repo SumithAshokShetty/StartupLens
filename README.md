@@ -1,4 +1,14 @@
+---
+title: StartupLens
+emoji: 🔎
+colorFrom: gray
+colorTo: indigo
+sdk: docker
+pinned: false
+---
+
 # 🔎 StartupLens: Your Autonomous AI Co-Founder
+
 
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/Frontend-React%20%2F%20Vite-61DAFB?logo=react&logoColor=black)](https://react.dev/)
