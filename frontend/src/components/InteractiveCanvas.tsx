@@ -62,9 +62,8 @@ const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
         const draw = () => {
             time += 0.012;
             
-            // Clear canvas with white background
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, width, height);
+            // Clear canvas to keep it transparent
+            ctx.clearRect(0, 0, width, height);
 
             // Ease mouse position (spring physics)
             mouse.x += (mouse.targetX - mouse.x) * 0.08;

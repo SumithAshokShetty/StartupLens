@@ -1,9 +1,9 @@
 {
   "summary": {
-    "avg_retrieval_hit_rate": 0.2222222222222222,
-    "avg_faithfulness": 0.4166666666666667,
-    "avg_relevance": 0.5333333333333333,
-    "overall_accuracy": 0.39074074074074067
+    "avg_retrieval_hit_rate": 0.5555555555555555,
+    "avg_faithfulness": 0.7666666666666666,
+    "avg_relevance": 0.8000000000000002,
+    "overall_accuracy": 0.7074074074074074
   },
   "cases": [
     {
@@ -14,32 +14,32 @@
       "relevance": 0.8,
       "details": {
         "hits": 1,
-        "faith_reason": "The summary mentions 'retail fashion platform for dresses space' which is not explicitly stated in the retrieved records. However, it can be inferred from the records. The summary also mentions 'high costs' as a reason for Spring's failure, but the retrieved records only mention 'high costs' as a general learning, not a specific reason for failure.",
-        "rel_reason": "The summary explains typical failure reasons in the retail fashion platform for dresses niche, specifically mentioning low retention, high costs, and low margins as common issues."
+        "faith_reason": "The summary is mostly faithful but it incorrectly states that Ista failed due to low demand, whereas the retrieved records state that Ista failed due to low demand and also mention 'lost to Rent the Runway' which is correct, but the retrieved records do not explicitly state that Ista failed due to losing to Rent the Runway, it only states that Ista failed due to low demand and also mentions 'lost to Rent the Runway' in a separate context.",
+        "rel_reason": "The summary explains typical failure reasons in the retail fashion platform niche, specifically highlighting high customer acquisition costs, low retention, and competition from established players as key factors."
       }
     },
     {
       "query": "educational apps for children",
       "retrieved_count": 3,
-      "hit_rate": 0.3333333333333333,
-      "faithfulness": 0.0,
+      "hit_rate": 0.6666666666666666,
+      "faithfulness": 0.8,
       "relevance": 0.8,
       "details": {
-        "hits": 1,
-        "faith_reason": "The summary mentions 'kids' ed needs scale' which is a direct quote from Homer's learnings, but it's presented as a general statement about the space, and also mentions 'kids' tech can be brutal' which is a direct quote from Zuuka's learnings, but it's presented as a general statement about the space. Additionally, the summary mentions 'losing to Epic!' which is a direct quote from Homer's and Zuuka's why failed, but it's presented as a general statement about the reason for failure. The summary also implies that Airy Labs failed due to a lack of focus, but it's not explicitly stated in the retrieved records that this is a general trend in the space.",
-        "rel_reason": "The summary explains typical failure reasons in the educational apps for children niche, specifically lack of focus and need for scale, but could be more comprehensive."
+        "hits": 2,
+        "faith_reason": "The summary mentions 'losing to Epic!' for Zuuka, which is not explicitly stated in the retrieved records. The records only mention that Zuuka shut down in 2017. The summary also implies that Codeacademy failed due to competition from Coursera, but the records only mention 'intense competition from Coursera' as a contributing factor, not the sole reason for failure.",
+        "rel_reason": "The summary explains typical failure reasons in the educational apps niche, specifically mentioning the importance of focusing on a single high-quality core product, having a clear path to monetization, and being prepared to compete in a crowded market, which are relevant to the user's query 'educational apps for children'."
       }
     },
     {
       "query": "fintech credit card for startups",
       "retrieved_count": 3,
-      "hit_rate": 0.0,
-      "faithfulness": 0.5,
-      "relevance": 0.0,
+      "hit_rate": 0.6666666666666666,
+      "faithfulness": 0.75,
+      "relevance": 0.8,
       "details": {
-        "hits": 0,
-        "faith_reason": "The summary mentions 'fintech credit card for startups space' which is not present in the retrieved records. It also implies that Seed failed due to needing scale, but the retrieved records state that Seed failed due to losing to Brex and closed, which is a different reason.",
-        "rel_reason": "Eval failed after retries"
+        "hits": 2,
+        "faith_reason": "The summary is not perfectly faithful because it does not mention the learnings from each startup's failure, which are present in the retrieved records.",
+        "rel_reason": "The summary explains typical failure reasons in the fintech credit card for startups niche, specifically highlighting issues with customer acquisition, bank partnership compliance, cash burn rate, credit risk, and competition."
       }
     }
   ]

@@ -6,7 +6,7 @@ import json
 load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
 
-query = "educational apps for children"
+query = "Agritech An app for farmers suggesting crop"
 print(f"Query: {query}")
 res = get_failed_startups_info(query, api_key)
 

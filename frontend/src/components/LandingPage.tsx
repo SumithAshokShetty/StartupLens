@@ -1,23 +1,122 @@
-import React, { useState, useEffect } from 'react';
-import { Linkedin, Mail, Bot, Menu, X, ArrowRight, Search, Globe, Shield, Check, Cpu } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Linkedin, Mail, Bot, Menu, X, ArrowRight, Search, Globe, Shield, Check, Cpu, Lock, Unlock, Key, Loader2, User, LogOut } from 'lucide-react';
 import ThreeScene from './ThreeScene';
 import ImmersiveAnimationSection from './ImmersiveAnimationSection';
 import InteractiveCanvas from './InteractiveCanvas';
+import { supabase } from '../lib/supabase';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const failureTabs = {
+    pmf: {
+        label: "Product-Market Fit",
+        percentage: 43,
+        color: "#EF4444", // red
+        problem: "Founders spend months building sophisticated software only to discover that the target audience has zero interest or budget to pay for it.",
+        impact: "Months of wasted developer salaries, exhausted seed runway, and building in a vacuum without market signals."
+    },
+    cash: {
+        label: "Cash Runout / Capital",
+        percentage: 38,
+        color: "#F97316", // orange
+        problem: "Startups scale marketing, hiring, and infrastructure prematurely before securing a stable, repeatable customer acquisition channel.",
+        impact: "The company runs out of operational runway and goes bankrupt while trying to solve basic product bugs."
+    },
+    competitors: {
+        label: "Competitor Domination",
+        percentage: 20,
+        color: "#F59E0B", // amber
+        problem: "Entering crowded, high-barrier markets without defining a clear, defendable niche, getting easily drowned out by incumbents.",
+        impact: "Unsustainably high acquisition costs (CAC) and zero customer retention as users return to established players."
+    },
+    model: {
+        label: "Flawed Business Model",
+        percentage: 19,
+        color: "#EAB308", // yellow
+        problem: "Assuming unrealistic price points, high margins, or customer lifetimes that fail to recover acquisition costs in the real economy.",
+        impact: "Every new user increases net losses, creating a business that burns cash faster as it scales."
+    }
+};
+
 interface LandingPageProps {
     onStart: () => void;
+    onStartAsGuest: () => void;
+    user: any;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onStart, onStartAsGuest, user }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [agentStep, setAgentStep] = useState(0);
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'annually'>('monthly');
     const [activePlan, setActivePlan] = useState<'starter' | 'pro' | 'enterprise'>('starter');
     const [scrollY, setScrollY] = useState(0);
+    const [failurePercentage, setFailurePercentage] = useState(0);
+    const [activeFailureTab, setActiveFailureTab] = useState<'pmf' | 'cash' | 'competitors' | 'model'>('pmf');
+    const [animationPhase, setAnimationPhase] = useState('initial'); // 'initial', 'counting', 'shifting', 'completed'
+
+    // Auth states
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [authEmail, setAuthEmail] = useState('');
+    const [authPassword, setAuthPassword] = useState('');
+    const [isSignUp, setIsSignUp] = useState(false);
+    const [authError, setAuthError] = useState('');
+    const [authLoading, setAuthLoading] = useState(false);
+    const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
+    const handleStartClick = () => {
+        if (user) {
+            onStart();
+        } else {
+            setShowAuthModal(true);
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        setAuthLoading(true);
+        setAuthError('');
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+            });
+            if (error) throw error;
+        } catch (err: any) {
+            console.error(err);
+            setAuthError(err.message || 'Google Sign-in failed.');
+        } finally {
+            setAuthLoading(false);
+        }
+    };
+
+    const handleEmailAuth = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setAuthLoading(true);
+        setAuthError('');
+        try {
+            if (isSignUp) {
+                const { error, data } = await supabase.auth.signUp({
+                    email: authEmail,
+                    password: authPassword,
+                });
+                if (error) throw error;
+                if (data.user && data.session === null) {
+                    setAuthError('Sign up successful! Please check your email for the confirmation link.');
+                }
+            } else {
+                const { error } = await supabase.auth.signInWithPassword({
+                    email: authEmail,
+                    password: authPassword,
+                });
+                if (error) throw error;
+            }
+        } catch (err: any) {
+            console.error(err);
+            setAuthError(err.message || 'Authentication failed.');
+        } finally {
+            setAuthLoading(false);
+        }
+    };
     // Simulated real-time agent "video logs" loop
     const agentLogs = [
         "Initializing Scout Agent...",
@@ -44,6 +143,51 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
         handleScroll();
         return () => {
             window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+
+    // Click-outside listener for profile dropdown
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (!target.closest('.relative-dropdown')) {
+                setShowProfileDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const section = document.getElementById("need-glorification");
+        if (!section) return;
+
+        const obj = { val: 0 };
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: section,
+                start: "top 70%",
+                toggleActions: "play none none none",
+            }
+        });
+
+        tl.to(obj, {
+            val: 43,
+            duration: 2.2,
+            ease: "power2.out",
+            onUpdate: () => {
+                setFailurePercentage(Math.round(obj.val));
+            }
+        });
+
+        tl.fromTo("#need-badge", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.5 }, "-=2.0");
+        tl.fromTo("#need-title", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6 }, "-=1.8");
+        tl.fromTo("#need-text-1", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, "-=1.5");
+        tl.fromTo("#need-text-2", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, "-=1.2");
+        tl.fromTo("#need-features", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, "-=0.9");
+
+        return () => {
+            tl.scrollTrigger?.kill();
         };
     }, []);
 
@@ -139,31 +283,46 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
         setIsMobileMenuOpen(false);
     };
 
+    const selectFailureTab = (tabKey: 'pmf' | 'cash' | 'competitors' | 'model') => {
+        setActiveFailureTab(tabKey);
+        const targetVal = failureTabs[tabKey].percentage;
+        const obj = { val: failurePercentage };
+        gsap.to(obj, {
+            val: targetVal,
+            duration: 0.8,
+            ease: "power2.out",
+            onUpdate: () => {
+                setFailurePercentage(Math.round(obj.val));
+            }
+        });
+    };
+
     // Plan detail mappings for the pricing panel (StartupLens validation runs)
     const planDetails = {
         starter: {
             title: "Starter",
-            priceMonthly: 10,
-            priceAnnually: 100,
+            priceMonthly: 18,
+            priceAnnually: 180,
             tagline: "GREAT FOR EARLY-STAGE CONCEPT VALIDATION.",
             features: [
-                "5 AI ANALYSIS REPORTS",
-                "BASIC SWOT MATRIX GENERATION",
-                "FAILED STARTUPS SEARCH ENGINE",
+                "5 AI DIAGNOSTIC REPORTS",
+                "SMART IDEA MATCHING & COMPARISONS",
+                "DYNAMIC FAILURE PATTERN GRAPHING",
+                "FAILED STARTUPS SEARCH INDEX",
                 "EMAIL SUPPORT"
             ]
         },
         pro: {
             title: "Pro",
-            priceMonthly: 20,
-            priceAnnually: 200,
+            priceMonthly: 30,
+            priceAnnually: 300,
             tagline: "EVERYTHING YOU NEED TO SUCCESSFULLY LAUNCH.",
             features: [
-                "UNLIMITED AI ANALYSIS REPORTS",
-                "1-ON-1 STRATEGY SESSION WITH EXPERTS",
-                "PITCH DECK REVIEW & FEEDBACK",
-                "INVESTOR-READY FINANCIAL PROJECTIONS",
-                "ADVANCED MARKET COMPETITOR TRACKING"
+                "UNLIMITED AI DIAGNOSTIC REPORTS",
+                "ADVERSARIAL AI BOARDROOM DEBATES & VERDICTS",
+                "ADVANCED COMPETITOR SEARCH INDEX",
+                "1-ON-1 STRATEGY SESSIONS WITH EXPERTS",
+                "PITCH DECK REVIEW & FINANCIAL PROJECTIONS"
             ]
         },
         enterprise: {
@@ -214,6 +373,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                         transform: scaleX(1);
                         transform-origin: bottom left;
                     }
+                    .globe-slide-spin {
+                        animation: globeSlide 7s ease-in-out infinite alternate;
+                    }
+                    @keyframes globeSlide {
+                        0% { transform: translateX(-140px) rotate(0deg); }
+                        100% { transform: translateX(0px) rotate(360deg); }
+                    }
                 `}
             </style>
 
@@ -233,12 +399,70 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                         <a href="#contact" className="bain-nav-link">Contact</a>
                     </div>
                     
-                    <button
-                        onClick={onStart}
-                        className="hidden md:block brand-btn-primary"
-                    >
-                        Get Started
-                    </button>
+                    <div className="flex items-center space-x-4">
+                        <button
+                            onClick={handleStartClick}
+                            className="hidden md:block brand-btn-primary"
+                        >
+                            Get Started
+                        </button>
+                        
+                        {user && (
+                            <div className="relative relative-dropdown flex items-center">
+                                <button
+                                    onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                                    className="focus:outline-none flex items-center justify-center w-8 h-8 rounded-full border border-black/10 hover:border-black/30 hover:bg-black/5 transition-all text-[#4B5563]"
+                                    title="Account settings"
+                                >
+                                    <User className="w-4.5 h-4.5" />
+                                </button>
+
+                                {showProfileDropdown && (() => {
+                                     const displayName = user.user_metadata?.full_name || 
+                                         user.email.split('@')[0]
+                                             .split(/[._-]/)
+                                             .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                                             .join('');
+                                     return (
+                                         <div className="absolute right-0 top-full mt-3.5 w-64 bg-white border border-[#E5E7EB] shadow-2xl rounded-lg py-4 px-5 z-[10002] animate-fade-in flex flex-col text-left">
+                                             <div className="flex flex-col pb-3 border-b border-[#E5E7EB] min-w-0">
+                                                 <span className="font-sans font-bold text-sm text-[#111827] truncate">
+                                                     {displayName}
+                                                 </span>
+                                                 <span className="font-sans text-xs text-gray-500 truncate mt-0.5 select-all">
+                                                     {user.email}
+                                                 </span>
+                                             </div>
+                                             <div className="flex flex-col pt-3 space-y-2.5 font-mono text-xs">
+                                                 <button 
+                                                     onClick={() => {
+                                                         setShowProfileDropdown(false);
+                                                         onStart();
+                                                     }}
+                                                     className="w-full text-left py-1 hover:text-black text-black/60 flex items-center gap-2 transition-colors font-bold uppercase text-[10px] tracking-wider"
+                                                 >
+                                                     <Cpu className="w-3.5 h-3.5" />
+                                                     Go to Dashboard
+                                                 </button>
+                                                 <div className="border-t border-[#E5E7EB] my-1"></div>
+                                                 <button 
+                                                     onClick={async () => {
+                                                         setShowProfileDropdown(false);
+                                                         await supabase.auth.signOut();
+                                                         window.location.reload();
+                                                     }}
+                                                     className="w-full text-left py-1 text-red-600 hover:text-red-700 flex items-center gap-2 transition-colors font-bold uppercase text-[10px] tracking-wider"
+                                                     >
+                                                     <LogOut className="w-3.5 h-3.5" />
+                                                     Log Out
+                                                 </button>
+                                             </div>
+                                         </div>
+                                     );
+                                })()}
+                            </div>
+                        )}
+                    </div>
 
                     <button
                         className="md:hidden p-2 text-[#4B5563] hover:text-[#111827] transition-colors"
@@ -257,7 +481,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                             <a href="#pricing" onClick={closeMobileMenu} className="bain-nav-link text-center">Pricing</a>
                             <a href="#contact" onClick={closeMobileMenu} className="bain-nav-link text-center">Contact</a>
                             <button
-                                onClick={() => { closeMobileMenu(); onStart(); }}
+                                onClick={() => { closeMobileMenu(); handleStartClick(); }}
                                 className="w-full mt-4 brand-btn-primary"
                             >
                                 Get Started
@@ -276,16 +500,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                     <div className="space-y-6" style={{ transform: `translateY(${Math.min(120, scrollY * 0.12)}px)`, transition: 'transform 100ms ease-out' }}>
                         <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-[#C0C0C0] bg-[#F0F0F0] text-[#111827] text-[12px] font-semibold font-mono">
                             <Bot className="w-4 h-4 text-[#4B5563]" />
-                            <span>MINIMALIST VALIDATION FRAMEWORK</span>
+                            <span>SMART IDEA VALIDATOR</span>
                         </div>
                         <h1 className="text-[44px] md:text-[64px] font-medium text-[#111827] leading-[1.04] tracking-tight">
-                            Validate Concept with <span className="text-[#111827] font-semibold underline decoration-[#C0C0C0] decoration-wavy">Multi-Agent RAG</span>
+                            From Idea to Evidence in <span className="text-[#111827] font-semibold underline decoration-[#C0C0C0] decoration-wavy">Minutes</span>
                         </h1>
                         <p className="text-[16px] font-normal text-[#4B5563] leading-[1.6] max-w-lg">
-                            An autonomous decision support engine that aggregates web index telemetry and historical startup failure records. Ensure strategic alignment before capital allocation.
+                            An AI-powered co-pilot that scans thousands of historical startup failures and real-time search trends. Spot critical market risks, competitor overlap, and cash burn traps before investing your time and money.
                         </p>
+
                         <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
-                            <button onClick={onStart} className="brand-btn-primary w-full sm:w-auto">
+                            <button onClick={handleStartClick} className="brand-btn-primary w-full sm:w-auto">
                                 Run Diagnostics
                                 <ArrowRight className="w-4 h-4 ml-2" />
                             </button>
@@ -330,7 +555,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                                     </div>
                                 </div>
 
-                                {/* Local 3D Startup Rocket Scene inside the Card */}
                                 <div className="h-[130px] w-full flex items-center justify-center relative z-10">
                                     <ThreeScene isFullscreen={false} />
                                 </div>
@@ -340,44 +564,203 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                                     <span className="text-[#4B5563] font-bold">$ </span>
                                     {agentLogs[agentStep]}
                                 </div>
+
+                                </div>
                             </div>
                         </div>
                     </div>
+            </section>
 
+            {/* Need Glorification Section */}
+            <section id="need-glorification" className="min-h-screen pt-[75px] pb-[75px] flex items-center justify-center border-t border-b border-[#C0C0C0] relative overflow-hidden bg-white z-20">
+                {/* Tech Grid Background pattern */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#E5E7EB_1px,transparent_1px),linear-gradient(to_bottom,#E5E7EB_1px,transparent_1px)] bg-[size:40px_40px] opacity-20 pointer-events-none"></div>
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[140px] pointer-events-none transition-all duration-700" style={{ backgroundColor: `${failureTabs[activeFailureTab].color}0A` }}></div>
+                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-slate-100/50 rounded-full blur-[120px] pointer-events-none"></div>
+
+                <div className="max-w-[1320px] mx-auto px-6 md:px-12 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 w-full relative z-10">
+                    {/* Circular Loader on the Left with Floating Questions */}
+                    <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+                        <div 
+                            className="relative w-72 h-72 flex items-center justify-center bg-white border border-black/10 rounded-full shadow-[0_15px_40px_rgba(0,0,0,0.05)] group transition-all duration-500"
+                            style={{ borderColor: `${failureTabs[activeFailureTab].color}30` }}
+                        >
+                            <div className="absolute inset-2 bg-slate-50/50 rounded-full border border-black/[0.02] group-hover:scale-95 transition-transform duration-500"></div>
+                            
+                            {/* Outer ticking rings */}
+                            <div className="absolute inset-5 rounded-full border border-dashed border-black/5 animate-[spin_120s_linear_infinite]"></div>
+                            <div className="absolute inset-9 rounded-full border border-dotted border-black/10 animate-[spin_60s_linear_infinite_reverse]"></div>
+
+                            <svg className="w-64 h-64 transform -rotate-90 relative z-10">
+                                <circle cx="128" cy="128" r="112" stroke="currentColor" strokeWidth="2" fill="transparent" className="text-black/[0.02]" />
+                                <circle
+                                    cx="128"
+                                    cy="128"
+                                    r="112"
+                                    stroke={failureTabs[activeFailureTab].color}
+                                    strokeWidth="8"
+                                    fill="transparent"
+                                    strokeDasharray={704}
+                                    strokeDashoffset={704 - (704 * failurePercentage) / 100}
+                                    className="transition-all duration-100 ease-out"
+                                    style={{ filter: `drop-shadow(0 0 7px ${failureTabs[activeFailureTab].color}30)` }}
+                                />
+                            </svg>
+                            <div className="absolute flex flex-col items-center justify-center z-20">
+                                <span className="text-7xl font-extrabold text-[#111827] font-mono tracking-tighter transition-all duration-300">
+                                    {failurePercentage}%
+                                </span>
+                                <span 
+                                    className="text-[9px] uppercase font-bold tracking-widest mt-2 font-mono border px-2 py-0.5 transition-all duration-300"
+                                    style={{ 
+                                        color: failureTabs[activeFailureTab].color,
+                                        borderColor: `${failureTabs[activeFailureTab].color}30`,
+                                        backgroundColor: `${failureTabs[activeFailureTab].color}04`
+                                    }}
+                                >
+                                    {failureTabs[activeFailureTab].label}
+                                </span>
+                            </div>
+                        </div>
+                        
+
+                    </div>
+
+                    {/* Explanatory Text on the Right */}
+                    <div className="flex-1 flex flex-col justify-center space-y-4">
+                        <div 
+                            id="need-badge" 
+                            className="inline-flex items-center space-x-2 px-2.5 py-0.5 border font-semibold font-mono text-[10px] w-fit transition-all duration-300"
+                            style={{
+                                color: failureTabs[activeFailureTab].color,
+                                borderColor: `${failureTabs[activeFailureTab].color}30`,
+                                backgroundColor: `${failureTabs[activeFailureTab].color}08`
+                            }}
+                        >
+                            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: failureTabs[activeFailureTab].color }}></span>
+                            <span>DECISION SUPPORT METRIC // CB INSIGHTS</span>
+                        </div>
+                        
+                        <h3 id="need-title" className="text-3xl md:text-4xl font-bold text-[#111827] tracking-tight leading-[1.1] font-sans">
+                            The Hard Reality of Startup Failure
+                        </h3>
+                        
+                        <p id="need-text-1" className="text-[#4B5563] text-sm md:text-base leading-relaxed font-medium">
+                            CB Insights analyzed 431 startup failures, revealing that founders consistently fall into the same execution traps. Building a product without validating these critical vectors is building in the dark.
+                        </p>
+
+                        {/* Interactive risk breakdown panel */}
+                        <div className="bg-slate-50/80 border border-black/5 p-4 space-y-3 rounded-xl transition-all duration-300">
+                            <div>
+                                <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#4B5563] font-mono mb-0.5">The Critical Failure Vector</h4>
+                                <p className="text-[#111827] text-xs md:text-sm leading-relaxed font-medium">
+                                    {failureTabs[activeFailureTab].problem}
+                                </p>
+                            </div>
+                            
+                            <div className="border-t border-black/5 pt-3">
+                                <h4 className="text-[10px] uppercase font-bold tracking-widest text-red-700 font-mono mb-0.5 flex items-center gap-1.5">
+                                    <span className="inline-block w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                    Severe Downstream Impact
+                                </h4>
+                                <p className="text-red-900 text-xs leading-relaxed font-medium">
+                                    {failureTabs[activeFailureTab].impact}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* CTA button to drive user to run validation */}
+                        <button 
+                            onClick={handleStartClick}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-[11px] font-mono uppercase font-bold tracking-wider text-white bg-black border border-black hover:bg-neutral-900 transition-all duration-300 shadow-md group"
+                        >
+                            <span>Analyze Your Concept for these Risk Factors</span>
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </button>
+
+                        {/* Key Risk Vector Selector Grid */}
+                        <div id="need-features" className="grid grid-cols-2 gap-3 pt-1">
+                            {[
+                                { name: "Unvalidated Demand", active: activeFailureTab === 'pmf' },
+                                { name: "Blind Spot Competitors", active: activeFailureTab === 'competitors' },
+                                { name: "Uncalculated Burn", active: activeFailureTab === 'cash' },
+                                { name: "Deficit Unit Economics", active: activeFailureTab === 'model' }
+                            ].map((feature, idx) => (
+                                <div 
+                                    key={idx} 
+                                    onClick={() => {
+                                        const mapping: Record<number, 'pmf' | 'competitors' | 'cash' | 'model'> = {
+                                            0: 'pmf',
+                                            1: 'competitors',
+                                            2: 'cash',
+                                            3: 'model'
+                                        };
+                                        selectFailureTab(mapping[idx]);
+                                    }}
+                                    className={`flex items-center space-x-2 border p-2.5 cursor-pointer transition-all duration-300 ${
+                                        feature.active 
+                                            ? `bg-red-50 border-red-500/30 text-red-900 shadow-sm`
+                                            : `bg-slate-50/50 border-black/5 text-[#4B5563] hover:border-black/10 hover:bg-slate-50`
+                                    }`}
+                                >
+                                    <span className="text-red-500 font-bold">⚠️</span>
+                                    <span className="text-[9px] font-bold font-mono uppercase tracking-wider">{feature.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </section>
 
             {/* About Section */}
-            <section id="about" className="py-20 px-6 md:px-[80px] border-t border-[#C0C0C0] bg-[#F0F0F0] text-[#111827]">
-                <div className="max-w-[1320px] mx-auto">
-                    <div className="flex flex-col lg:flex-row items-center gap-12">
+            <section id="about" className="min-h-screen pt-[85px] pb-6 px-6 md:px-[80px] border-t border-[#C0C0C0] bg-[#F0F0F0] text-[#111827] flex items-center justify-center">
+                <div className="max-w-[1320px] mx-auto w-full">
+                    <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
                         
-                        <div className="lg:w-1/2 space-y-6">
-                            <span className="text-[#111827] font-semibold font-mono tracking-wider uppercase text-xs">PLATFORM CONCEPT</span>
-                            <h2 className="text-[32px] md:text-[48px] font-medium text-[#111827] leading-[1.1] tracking-tight">
+                        <div className="lg:w-1/2 space-y-4">
+                            <span className="text-[#111827] font-semibold font-mono tracking-wider uppercase text-[10px]">PLATFORM CONCEPT</span>
+                            <h2 className="text-[28px] md:text-[36px] font-medium text-[#111827] leading-[1.1] tracking-tight">
                                 Rigorous Market Intelligence
                             </h2>
-                            <p className="text-[16px] font-normal text-[#4B5563] leading-[1.6]">
-                                StartupLens integrates multi-agent reasoning, RAG fail logs, and Google Search grounding to deliver high-quality strategic validation report decks.
+                            <p className="text-sm text-[#4B5563] leading-relaxed">
+                                StartupLens acts as an automated advisor for founders and investors. We scan thousands of past startup failures, cross-reference market demand, and simulate investment reviews so you can identify fatal flaws early.
                             </p>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
-                                <div className="bg-white p-6 rounded-lg border border-[#C0C0C0] min-h-[220px] flex flex-col justify-between hover:shadow-md transition-shadow">
-                                    <div className="w-8 h-8 rounded-lg bg-[#F0F0F0] flex items-center justify-center mb-3 border border-[#C0C0C0]">
-                                        <Search className="w-4 h-4 text-[#111827]" />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                                <div className="bg-white p-4 rounded-lg border border-[#C0C0C0] min-h-[145px] flex flex-col justify-between hover:shadow-sm transition-shadow">
+                                    <div className="w-7 h-7 rounded bg-[#F0F0F0] flex items-center justify-center mb-1.5 border border-[#C0C0C0]">
+                                        <Search className="w-3.5 h-3.5 text-[#111827]" />
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-[#111827] text-sm mb-2">Grounded Indexing</h4>
-                                        <p className="text-xs text-[#4B5563] leading-relaxed">Cross-references inputs with live search trends and competitor market caps.</p>
+                                        <h4 className="font-semibold text-[#111827] text-xs mb-1">Smart Idea Matching</h4>
+                                        <p className="text-[10px] text-[#4B5563] leading-relaxed">Instantly compares your business concept against a database of similar startups that came before.</p>
                                     </div>
                                 </div>
-                                <div className="bg-white p-6 rounded-lg border border-[#C0C0C0] min-h-[220px] flex flex-col justify-between hover:shadow-md transition-shadow">
-                                    <div className="w-8 h-8 rounded-lg bg-[#F0F0F0] flex items-center justify-center mb-3 border border-[#C0C0C0]">
-                                        <Shield className="w-4 h-4 text-[#111827]" />
+                                <div className="bg-white p-4 rounded-lg border border-[#C0C0C0] min-h-[145px] flex flex-col justify-between hover:shadow-sm transition-shadow">
+                                    <div className="w-7 h-7 rounded bg-[#F0F0F0] flex items-center justify-center mb-1.5 border border-[#C0C0C0]">
+                                        <Shield className="w-3.5 h-3.5 text-[#111827]" />
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-[#111827] text-sm mb-2">Failure Corpus RAG</h4>
-                                        <p className="text-xs text-[#4B5563] leading-relaxed">Maps startup failure reasons to detect overlaps in capital burn and marketing strategy.</p>
+                                        <h4 className="font-semibold text-[#111827] text-xs mb-1">Post-Mortem Library</h4>
+                                        <p className="text-[10px] text-[#4B5563] leading-relaxed">Analyzes thousands of failed startup journals and studies to map out hidden operational risks.</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-4 rounded-lg border border-[#C0C0C0] min-h-[145px] flex flex-col justify-between hover:shadow-sm transition-shadow">
+                                    <div className="w-7 h-7 rounded bg-[#F0F0F0] flex items-center justify-center mb-1.5 border border-[#C0C0C0]">
+                                        <Cpu className="w-3.5 h-3.5 text-[#111827]" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-[#111827] text-xs mb-1">AI Stress Testing</h4>
+                                        <p className="text-[10px] text-[#4B5563] leading-relaxed">Simulates custom reviews by AI agents playing "good cop, bad cop" to challenge your assumptions.</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-4 rounded-lg border border-[#C0C0C0] min-h-[145px] flex flex-col justify-between hover:shadow-sm transition-shadow">
+                                    <div className="w-7 h-7 rounded bg-[#F0F0F0] flex items-center justify-center mb-1.5 border border-[#C0C0C0]">
+                                        <Globe className="w-3.5 h-3.5 text-[#111827]" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-[#111827] text-xs mb-1">Visual Risk Graphs</h4>
+                                        <p className="text-[10px] text-[#4B5563] leading-relaxed">Groups historical failure patterns visually to show you where similar ideas ran into brick walls.</p>
                                     </div>
                                 </div>
                             </div>
@@ -385,24 +768,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
 
                         {/* Interactive diagram mockup */}
                         <div className="lg:w-1/2 w-full">
-                            <div className="bg-white p-8 rounded-lg border border-[#C0C0C0] relative overflow-hidden min-h-[380px] flex flex-col justify-between shadow-sm">
-                                <div className="flex justify-between items-center mb-6 border-b border-[#C0C0C0] pb-3">
-                                    <span className="text-xs font-mono uppercase text-[#4B5563] font-bold">RAG Similarity Analyzer</span>
-                                    <Globe className="w-4 h-4 text-[#111827]" />
+                            <div className="bg-white p-6 rounded-lg border border-[#C0C0C0] relative overflow-hidden min-h-[290px] flex flex-col justify-between shadow-sm">
+                                <div className="flex justify-between items-center mb-4 border-b border-[#C0C0C0] pb-2">
+                                    <span className="text-[10px] font-mono uppercase text-[#4B5563] font-bold">Concept Similarity Analyzer</span>
+                                    <Globe className="w-4 h-4 text-[#111827] globe-slide-spin" />
                                 </div>
                                 
                                 <div className="space-y-4 font-mono text-xs text-[#111827]">
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-[10px] text-[#4B5563]">
-                                            <span>VECTOR SIMILARITY GRID</span>
-                                            <span>94.8% ACCURACY</span>
+                                            <span>IDEA SIMILARITY MATCH</span>
+                                            <span>94.8% RISK OVERLAP</span>
                                         </div>
-                                        <div className="h-2 bg-[#F0F0F0] rounded-full w-full relative overflow-hidden">
+                                        <div className="h-1.5 bg-[#F0F0F0] rounded-full w-full relative overflow-hidden">
                                             <div className="h-full bg-[#111827] rounded-full w-[94.8%] transition-all duration-500"></div>
                                         </div>
                                     </div>
 
-                                    <div className="p-4 bg-[#F0F0F0] border border-[#C0C0C0] rounded-lg text-[#4B5563] text-[11px] leading-relaxed">
+                                    <div className="p-3 bg-[#F0F0F0] border border-[#C0C0C0] rounded-lg text-[#4B5563] text-[10px] leading-relaxed">
                                         Similarity matrix confirms matches in Sector: <strong className="text-[#111827]">Fintech Lending</strong>. Key failures matched: <em className="text-[#111827]">"Over-subsidizing user growth without positive unit economics."</em>
                                     </div>
                                 </div>
@@ -414,7 +797,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             </section>
 
             {/* How It Works Section */}
-            <section id="how-it-works" className="py-20 px-6 md:px-[80px] border-t border-[#C0C0C0] bg-white text-[#111827]">
+            <section id="how-it-works" className="scroll-mt-[75px] py-20 px-6 md:px-[80px] border-t border-[#C0C0C0] bg-white text-[#111827]">
                 <div className="max-w-[1320px] mx-auto text-center">
                     <span className="text-[#4B5563] font-semibold font-mono tracking-wider uppercase text-xs">PROCESS</span>
                     <h2 className="text-[32px] md:text-[48px] font-medium text-[#111827] mt-4 mb-12 leading-[1.1] tracking-tight">Diagnostics Workflow</h2>
@@ -456,7 +839,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             <ImmersiveAnimationSection />
 
             {/* Pricing Card Section */}
-            <section id="pricing" className="py-12 px-6 md:px-[80px] border-t border-[#C0C0C0] bg-white text-white relative" style={{ perspective: '1500px' }}>
+            <section id="pricing" className="scroll-mt-[90px] py-12 px-6 md:px-[80px] border-t border-[#C0C0C0] bg-white text-white relative" style={{ perspective: '1500px' }}>
                  
                  <div 
                     id="pricing-card-3d"
@@ -472,7 +855,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                         <div className="flex items-center space-x-2">
                             <span className="text-xs font-mono uppercase text-white/50 tracking-wider">StartupLens // Diagnostics Suite</span>
                         </div>
-                        <button onClick={onStart} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 text-white font-semibold text-xs tracking-wider transition-all">
+                        <button onClick={handleStartClick} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 text-white font-semibold text-xs tracking-wider transition-all">
                             Start Evaluating &rarr;
                         </button>
                     </div>
@@ -566,17 +949,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                                     {/* Features Bullet List - Laid out in 2 columns */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 pt-2">
                                         {currentPlanInfo.features.map((feat, idx) => (
-                                            <div key={idx} className="flex items-center space-x-2 text-[11px] font-mono text-white/80">
-                                                <div className="w-3.5 h-3.5 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0 text-cyan-400">
+                                            <div key={idx} className="flex items-start space-x-2 text-[11px] font-mono text-white/80">
+                                                <div className="w-3.5 h-3.5 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0 text-cyan-400 mt-0.5">
                                                     <Check className="w-2.5 h-2.5" />
                                                 </div>
-                                                <span className="tracking-wide truncate">{feat}</span>
+                                                <span className="tracking-wide">{feat}</span>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
-                                <button onClick={onStart} className="w-full mt-6 py-3 bg-white text-black font-semibold rounded-xl text-center hover:bg-white/95 transition-all text-xs tracking-wider uppercase font-mono shadow-md">
+                                <button onClick={handleStartClick} className="w-full mt-6 py-3 bg-white text-black font-semibold rounded-xl text-center hover:bg-white/95 transition-all text-xs tracking-wider uppercase font-mono shadow-md">
                                     Get Started
                                 </button>
                             </div>
@@ -679,6 +1062,104 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                     </div>
                 </div>
             </footer>
+            {showAuthModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className="bg-white border border-[#C0C0C0] max-w-md w-full p-8 relative shadow-2xl rounded-none flex flex-col">
+                        
+                        {/* Close button */}
+                        <button 
+                            onClick={() => { setShowAuthModal(false); setAuthError(''); }}
+                            className="absolute top-4 right-4 text-[#4B5563] hover:text-[#111827] transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+
+                        <div className="text-center mb-6">
+                            <span className="inline-flex items-center justify-center p-2.5 bg-[#F3F4F6] border border-[#E5E7EB] text-[#111827] mb-3">
+                                <Lock className="w-5 h-5" />
+                            </span>
+                            <h3 className="text-xl font-bold text-[#111827]">Access StartupLens</h3>
+                            <p className="text-xs text-[#4B5563] mt-1.5 leading-relaxed">
+                                Choose how you want to experience the platform.
+                            </p>
+                        </div>
+
+                        {/* Error Message */}
+                        {authError && (
+                            <div className={`p-3 text-xs mb-4 border ${authError.includes('successful') || authError.includes('check') ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-red-50 border-red-300 text-red-800'}`}>
+                                {authError}
+                            </div>
+                        )}
+
+                        <div className="space-y-4">
+                            {/* Option 1: Try as Guest */}
+                            <button
+                                onClick={() => {
+                                    setShowAuthModal(false);
+                                    onStartAsGuest();
+                                }}
+                                className="w-full flex flex-col items-center justify-center p-4 bg-[#F9FAFB] border border-[#E5E7EB] hover:border-[#111827] hover:bg-neutral-50 transition-all text-center group"
+                            >
+                                <div className="flex items-center gap-1.5 font-bold text-xs text-[#111827] uppercase tracking-wide">
+                                    <Unlock className="w-3.5 h-3.5" />
+                                    Try as Guest
+                                </div>
+                                <span className="text-[10px] text-[#4B5563]/60 mt-1 font-mono">Temporary session, no history saved</span>
+                            </button>
+
+                            <div className="relative flex py-2 items-center">
+                                <div className="flex-grow border-t border-gray-200"></div>
+                                <span className="flex-shrink mx-4 text-[10px] text-gray-400 font-mono uppercase tracking-wider">or sign in to persist</span>
+                                <div className="flex-grow border-t border-gray-200"></div>
+                            </div>
+
+                            {/* Option 3: Email + Password Form */}
+                            <form onSubmit={handleEmailAuth} className="space-y-3 pt-1">
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-[#4B5563] mb-1 font-mono">Email Address</label>
+                                    <input 
+                                        type="email" 
+                                        required
+                                        value={authEmail}
+                                        onChange={(e) => setAuthEmail(e.target.value)}
+                                        placeholder="you@example.com"
+                                        className="w-full px-3 py-2 border border-[#C0C0C0] text-[#111827] text-xs focus:outline-none focus:border-[#111827] rounded-none bg-white font-mono"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-[#4B5563] mb-1 font-mono">Password</label>
+                                    <input 
+                                        type="password" 
+                                        required
+                                        value={authPassword}
+                                        onChange={(e) => setAuthPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        className="w-full px-3 py-2 border border-[#C0C0C0] text-[#111827] text-xs focus:outline-none focus:border-[#111827] rounded-none bg-white font-mono"
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={authLoading}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-black hover:bg-neutral-950 text-white transition-colors text-xs font-bold uppercase tracking-wider font-mono rounded-none mt-4 border border-black"
+                                >
+                                    {authLoading ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : (isSignUp ? 'Create Account' : 'Sign In')}
+                                </button>
+                            </form>
+
+                            {/* Switcher link */}
+                            <div className="text-center pt-2">
+                                <button
+                                    onClick={() => { setIsSignUp(!isSignUp); setAuthError(''); }}
+                                    className="text-[10px] text-[#4B5563] hover:text-[#111827] underline tracking-wide font-mono"
+                                >
+                                    {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Create one"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

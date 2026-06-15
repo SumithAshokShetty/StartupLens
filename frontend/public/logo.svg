@@ -2,8 +2,8 @@
   <defs>
     <!-- Define the gradient from vibrant blue to deep violet/purple -->
     <linearGradient id="logo-grad" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#0052FF" />
-      <stop offset="100%" stop-color="#7B2CBF" />
+      <stop offset="0%" stop-color="#000000" />
+      <stop offset="100%" stop-color="#000000" />
     </linearGradient>
   </defs>
 

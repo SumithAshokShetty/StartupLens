@@ -17,6 +17,8 @@ class MetadataProvider:
     def enrich_record(self, name: str, existing_metadata: dict) -> dict:
         """
         Enrich existing metadata with information from the startup knowledge base.
+        If a field in the knowledge base is longer/richer than the existing one,
+        we override it to enrich sparse/minimal descriptions.
         """
         name_key = name.strip()
         
@@ -30,7 +32,6 @@ class MetadataProvider:
         
         if match:
             enriched = existing_metadata.copy()
-            # Enrich only if the field in metadata is empty or missing
             for field, key_in_kb in [
                 ("sector", "Sector"),
                 ("years_of_operation", "Years of Operation"),
@@ -40,7 +41,13 @@ class MetadataProvider:
                 ("learnings", "Takeaway")
             ]:
                 kb_val = match.get(key_in_kb, "")
-                if kb_val and not enriched.get(field):
+                existing_val = enriched.get(field, "")
+                
+                # Check if the field is missing or "sparse" (less detailed than the knowledge base entry)
+                is_missing = not existing_val
+                is_sparse = len(str(existing_val).split()) < len(str(kb_val).split())
+                
+                if kb_val and (is_missing or is_sparse):
                     enriched[field] = kb_val
             return enriched
         

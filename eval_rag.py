@@ -24,6 +24,24 @@ class RAGEvaluator:
         self.api_key = api_key
         self.llm = ChatGroq(temperature=0, model_name="llama-3.1-8b-instant", groq_api_key=api_key)
         
+    def robust_json_loads(self, text):
+        text = text.strip()
+        if not text:
+            return {"score": 0.0, "reason": "Empty response"}
+        # Try to find JSON block
+        start = text.find('{')
+        end = text.rfind('}')
+        if start != -1 and end != -1 and end > start:
+            json_str = text[start:end+1]
+            try:
+                return json.loads(json_str)
+            except Exception:
+                pass
+        try:
+            return json.loads(text)
+        except Exception as e:
+            return {"score": 0.0, "reason": f"Failed to parse JSON: {e}. Raw response: {text[:200]}"}
+
     def evaluate_faithfulness(self, query, context_startups, summary):
         """Checks if the summary is faithful to the retrieved startups."""
         prompt = PromptTemplate.from_template("""
@@ -50,7 +68,7 @@ class RAGEvaluator:
         for _ in range(3):
             try:
                 res = chain.invoke({"startups": startup_details, "summary": summary})
-                return json.loads(res.content)
+                return self.robust_json_loads(res.content)
             except Exception as e:
                 print(f"    [!] Faithfulness eval failed, retrying... ({e})")
                 time.sleep(10)
@@ -73,7 +91,7 @@ class RAGEvaluator:
         for _ in range(3):
             try:
                 res = chain.invoke({"query": query, "summary": summary})
-                return json.loads(res.content)
+                return self.robust_json_loads(res.content)
             except Exception as e:
                 print(f"    [!] Relevance eval failed, retrying... ({e})")
                 time.sleep(10)

@@ -1,7 +1,8 @@
+import os
+os.environ["TQDM_DISABLE"] = "1"
 import time
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
 from dotenv import load_dotenv
 load_dotenv(override=True)
 from src.agents.agent import (
@@ -30,26 +31,29 @@ def analyze():
         
     idea = data.get('idea')
     industry = data.get('industry')
+    geographic_market = data.get('geographic_market', 'Global')
     custom_api_key = data.get('custom_api_key') 
     extra_context = data.get('extra_context', '')
     
-    print(f"\n=== Starting KPI Analysis for: {idea} ({industry}) ===")
+    print(f"\n=== Starting KPI Analysis for: {idea} ({industry}) in market: {geographic_market} ===")
     
     master_prompt = f"""
-    Analyze the startup idea: '{idea}' in the '{industry}' industry. {extra_context}
+    Analyze the startup idea: '{idea}' in the '{industry}' industry, targeting the '{geographic_market}' geographic market. {extra_context}
     
     Perform a complete business deep-dive:
-    1. Research 3 Competitors (Name, Market Share %, Audience, Strategy).
+    1. Research 3 Competitors (Name, Market Share %, Audience, Strategy) in the target geographic market '{geographic_market}'.
     2. Identify the Whitespace Opportunity.
     3. Calculate Viability Score (0-100).
     4. Define Risk, Roadmap, Business Models (3), Acquisition Channels (3), Target Persona, and SWOT.
     5. Financial Projections (Revenue per user, Min Investment, Break-even, Growth Rate).
-       - CALCULATE realistic, unique figures based on the specific market of '{idea}'. DO NOT repeat the examples below.
+       - CALCULATE realistic, unique figures based on the specific market of '{idea}' in '{geographic_market}'. DO NOT repeat the examples below.
        - For Min Investment, provide a breakdown, e.g., '[Value] (Dev, Marketing, Ops)'.
        - For Growth Rate, specify the driver, e.g., '[X]% MoM (via [Channel])'.
        - For Revenue / User, mention the model, e.g., '$[X] / [Period] ([Model])'.
     6. Market Trends (4 Key trends).
     7. Demographics Data (Age group distribution percentages).
+    8. Calculate unique, realistic market sizing metrics specifically for the '{geographic_market}' market: TAM (Total Addressable Market), SAM (Serviceable Addressable Market), and SOM (Serviceable Obtainable Market). Include a brief explanation of how these were calculated.
+    9. Boardroom Debate: 3 reasons to invest (Bull Agent), 3 reasons NOT to invest (Bear Agent), and a final Verdict by a Judge Agent (verdict title: "Invest" / "Avoid" / "Invest with Conditions", confidence percentage 0-100, and a brief reasoning justification).
     
     Output strictly VALID JSON with this structure, and do NOT include any emojis in any of the response text:
     {{
@@ -57,7 +61,14 @@ def analyze():
           "competitors": [ {{ "name": "...", "market_share": 30, "target_audience": "...", "marketing_strategy": "..." }}, ... ],
           "opportunity": "...",
           "market_trends": ["Trend 1...", "Trend 2...", "Trend 3...", "Trend 4..."],
-          "market_share_insight": "Brief insight on competitor dominance..."
+          "market_share_insight": "Brief insight on competitor dominance...",
+          "market_sizing": {{
+              "tam": "$...",
+              "sam": "$...",
+              "som": "$...",
+              "confidence": 82,
+              "explanation": "..."
+          }}
       }},
       "strategy": {{
           "viability_score": 85,
@@ -77,7 +88,14 @@ def analyze():
               "age_groups": {{ "18-24": 20, "25-34": 40, "35-44": 25, "45+": 15 }},
               "demographics_insight": "Brief insight on target age group..."
           }},
-          "swot": {{ "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] }}
+          "swot": {{ "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] }},
+          "investment_debate": {{
+              "bull_agent": ["Reason 1...", "Reason 2...", "Reason 3..."],
+              "bear_agent": ["Reason 1...", "Reason 2...", "Reason 3..."],
+              "judge_verdict": "Invest with Conditions",
+              "judge_confidence": 93,
+              "judge_reasoning": "Brief reasoning..."
+          }}
       }}
     }}
     """
@@ -185,7 +203,13 @@ def analyze():
             "competitors": [], 
             "opportunity": "Analysis generated invalid format.",
             "market_trends": [],
-            "market_share_insight": "Data unavailable."
+            "market_share_insight": "Data unavailable.",
+            "market_sizing": {
+                "tam": "N/A",
+                "sam": "N/A",
+                "som": "N/A",
+                "explanation": "Market sizing data is currently unavailable."
+            }
         }
         strategy_data = {
             "viability_score": 0, 
@@ -235,4 +259,4 @@ def failed_startups():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 7860))
-    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=True)
