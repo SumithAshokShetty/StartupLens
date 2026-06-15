@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Activity, Target, AlertTriangle, CheckCircle, ArrowRight, Zap, Users, TrendingUp, DollarSign, Shield, BarChart3, PieChart as PieChartIcon, Layers, Lock, Unlock, Menu, User, SquarePen, MessageCircle, RefreshCw, Download, Home, Info, X, Search, BarChart2, Scale, Trash2, Pin, Plus, LogOut, Globe, ChevronLeft } from 'lucide-react';
+import { Activity, Target, AlertTriangle, CheckCircle, ArrowRight, Zap, Users, TrendingUp, DollarSign, Shield, BarChart3, PieChart as PieChartIcon, Layers, Lock, Unlock, Menu, User, RefreshCw, Download, Home, Info, X, Search, BarChart2, Scale, Trash2, Pin, Plus, LogOut, ChevronLeft } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import InteractiveCanvas from './InteractiveCanvas';
 import { supabase } from '../lib/supabase';
@@ -182,11 +182,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onBack, user, isGuest, onLogout }
     const [showMethodology, setShowMethodology] = useState(false);
     const [scrollProgress, setScrollProgress] = useState(0);
     const [currency, setCurrency] = useState<'USD' | 'INR' | 'EUR' | 'GBP'>('USD');
-    const [failurePercentage, setFailurePercentage] = useState(0);
-    const [animationPhase, setAnimationPhase] = useState('initial'); // 'initial', 'counting', 'shifting', 'completed'
     const [showCurrencyTip, setShowCurrencyTip] = useState(false);
     const [geographicMarket, setGeographicMarket] = useState<'Global' | 'India' | 'USA' | 'Europe'>('Global');
-    const [activeSectionExplainer, setActiveSectionExplainer] = useState<string | null>(null);
 
     // Sidebar & History States
     const [history, setHistory] = useState<any[]>([]);
@@ -195,41 +192,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onBack, user, isGuest, onLogout }
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
     // Dynamic Identicon SVG Generator (matches the green block style)
-    const generateIdenticon = useCallback((email: string) => {
-        let hash = 0;
-        const str = email || "guest";
-        for (let i = 0; i < str.length; i++) {
-            hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        
-        const grid: boolean[][] = [];
-        const baseGreen = `hsl(142, ${60 + Math.abs(hash % 20)}%, ${40 + Math.abs(hash % 15)}%)`;
-        
-        for (let r = 0; r < 5; r++) {
-            grid[r] = [];
-            for (let c = 0; c < 5; c++) {
-                const isSymmetric = c < 3 ? (Math.abs(hash >> (r * 3 + c)) % 2 === 0) : grid[r][4 - c];
-                grid[r][c] = isSymmetric;
-            }
-        }
-        
-        return (
-            <svg viewBox="0 0 100 100" className="w-8 h-8 rounded-md border border-black/15 select-none cursor-pointer overflow-hidden bg-[#F3F4F6] transition-transform hover:scale-105">
-                {grid.map((row, r) => 
-                    row.map((active, c) => active && (
-                        <rect 
-                            key={`${r}-${c}`} 
-                            x={c * 20} 
-                            y={r * 20} 
-                            width={20} 
-                            height={20} 
-                            fill={baseGreen} 
-                        />
-                    ))
-                )}
-            </svg>
-        );
-    }, []);
 
     const fetchHistory = useCallback(async () => {
         let localList: any[] = [];
@@ -848,10 +810,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onBack, user, isGuest, onLogout }
 
             {/* Collapsible Sidebar (Authenticated users only) */}
             {user && !isSidebarCollapsed && (() => {
-                const initials = (user.user_metadata?.full_name 
-                    ? user.user_metadata.full_name.split(' ').map((n: string) => n[0]).join('')
-                    : user.email.substring(0, 2)
-                ).substring(0, 2).toUpperCase();
 
                 return (
                     <aside className="bg-[#F9FAFB] border-r border-[#C0C0C0] flex flex-col h-screen sticky top-0 shrink-0 z-[60] print:hidden select-none w-[280px] overflow-hidden">

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Linkedin, Mail, Bot, Menu, X, ArrowRight, Search, Globe, Shield, Check, Cpu, Lock, Unlock, Key, Loader2, User, LogOut } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Linkedin, Mail, Bot, Menu, X, ArrowRight, Search, Globe, Shield, Check, Cpu, Lock, Unlock, Loader2, User, LogOut } from 'lucide-react';
 import ThreeScene from './ThreeScene';
 import ImmersiveAnimationSection from './ImmersiveAnimationSection';
 import InteractiveCanvas from './InteractiveCanvas';
@@ -54,7 +54,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onStartAsGuest, user
     const [scrollY, setScrollY] = useState(0);
     const [failurePercentage, setFailurePercentage] = useState(0);
     const [activeFailureTab, setActiveFailureTab] = useState<'pmf' | 'cash' | 'competitors' | 'model'>('pmf');
-    const [animationPhase, setAnimationPhase] = useState('initial'); // 'initial', 'counting', 'shifting', 'completed'
 
     // Auth states
     const [showAuthModal, setShowAuthModal] = useState(false);
@@ -73,21 +72,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onStartAsGuest, user
         }
     };
 
-    const handleGoogleSignIn = async () => {
-        setAuthLoading(true);
-        setAuthError('');
-        try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-            });
-            if (error) throw error;
-        } catch (err: any) {
-            console.error(err);
-            setAuthError(err.message || 'Google Sign-in failed.');
-        } finally {
-            setAuthLoading(false);
-        }
-    };
 
     const handleEmailAuth = async (e: React.FormEvent) => {
         e.preventDefault();
