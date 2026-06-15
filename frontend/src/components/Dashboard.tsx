@@ -503,31 +503,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onBack, user, isGuest, onLogout }
         return () => clearTimeout(timer);
     }, [idea]);
 
-    useEffect(() => {
-        if (data || loading || error) return;
-        
-        setFailurePercentage(0);
-        setAnimationPhase('counting');
-        
-        let current = 0;
-        const interval = setInterval(() => {
-            current += 1;
-            if (current >= 43) {
-                setFailurePercentage(43);
-                clearInterval(interval);
-                setTimeout(() => {
-                    setAnimationPhase('shifting');
-                    setTimeout(() => {
-                        setAnimationPhase('completed');
-                    }, 800);
-                }, 600);
-            } else {
-                setFailurePercentage(current);
-            }
-        }, 35);
-        
-        return () => clearInterval(interval);
-    }, [data, loading, error]);
 
     useEffect(() => {
         const handleScroll = () => {
