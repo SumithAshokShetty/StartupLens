@@ -7,3 +7,6 @@ venv/
 *.txt
 !requirements.txt
 .git_old/
+scratch/
+SUBMISSION_README.md
+venv_test/
