@@ -442,18 +442,23 @@ const Dashboard: React.FC<DashboardProps> = ({ onBack, user, isGuest, onLogout }
         
         const INDUSTRY_KEYWORDS: { [key: string]: string[] } = {
             "Food Services": ["food", "meal", "restaurant", "recipe", "chef", "dining", "cafe", "cooking", "beverage", "drink", "kitchen", "organic", "grocery", "barista", "espresso", "coffee", "delivery", "subscription box", "kits", "culinary", "catering", "eats", "foodtech"],
-            "Health Care": ["health", "medical", "doctor", "clinic", "hospital", "patient", "biotech", "care", "medicine", "wellness", "clinical", "fitness", "therapy", "disease", "pharma", "treatment", "telehealth", "medtech", "healthtech"],
-            "Finance and Insurance": ["finance", "insurance", "bank", "payment", "money", "loan", "investment", "credit", "fintech", "wallet", "crypto", "trading", "stock", "wealth", "insurtech", "lend", "defi", "wealthtech", "blockchain"],
-            "Retail Trade": ["retail", "shop", "e-commerce", "store", "commerce", "buy", "sell", "clothing", "goods", "apparel", "customer", "marketplace", "checkout", "fashion", "brand", "d2c", "b2c", "sales"],
-            "Manufactures": ["manufactur", "factory", "production", "industrial", "hardware", "material", "assembly", "parts", "print 3d", "machine", "builder", "device", "robotics", "iot", "3d printing", "automotive"],
-            "Information Sector": ["software", "ai", "artificial intelligence", "data", "cloud", "saas", "app", "web", "cybersecurity", "security", "developer", "api", "network", "platform", "algorithm", "analytics", "coding", "game", "mobile", "education", "educational", "teach", "learn", "school", "student", "classroom", "course", "e-learning", "edtech", "gamified", "interactive", "programming", "computer", "technology", "puzzle", "suite", "digital"]
+            "Health Care": ["health", "medical", "doctor", "clinic", "hospital", "patient", "biotech", "care", "medicine", "wellness", "clinical", "fitness", "therapy", "disease", "pharma", "treatment", "telehealth", "medtech", "healthtech", "mental health", "diagnostic"],
+            "Finance and Insurance": ["finance", "financial", "insurance", "bank", "banking", "payment", "money", "loan", "investment", "credit", "fintech", "wallet", "crypto", "trading", "stock", "wealth", "insurtech", "lend", "defi", "wealthtech", "blockchain", "accounting", "tax"],
+            "Retail Trade": ["retail", "shop", "e-commerce", "ecommerce", "store", "commerce", "buy", "sell", "clothing", "goods", "apparel", "marketplace", "checkout", "fashion", "brand", "d2c", "b2c", "sales", "rental", "lease", "rent", "accessories", "designer", "luxury", "premium"],
+            "Manufactures": ["manufactur", "factory", "production", "industrial", "hardware", "material", "assembly", "parts", "print 3d", "machine", "builder", "device", "robotics", "iot", "3d printing", "automotive", "drone"],
+            "Education": ["education", "educational", "teach", "learn", "learning", "school", "student", "classroom", "course", "e-learning", "edtech", "tutor", "tutoring", "training", "curriculum", "quiz", "exam", "university", "college", "academic", "scholarship", "lms", "mooc", "skill development"],
+            "Information Technology": ["software", "ai", "artificial intelligence", "machine learning", "deep learning", "saas", "cybersecurity", "security", "developer", "api", "cloud", "devops", "database", "algorithm", "analytics", "coding", "programming", "computer science", "infrastructure", "server", "microservice", "automation"],
+            "Transportation": ["transport", "logistics", "delivery", "fleet", "shipping", "freight", "ride", "taxi", "cab", "mobility", "scooter", "ev", "electric vehicle", "car", "bike", "commute", "travel", "booking", "transit", "route"],
+            "Real Estate": ["real estate", "property", "housing", "rent", "tenant", "landlord", "mortgage", "realty", "proptech", "apartment", "home", "renovation", "construction", "building", "co-living", "coworking"],
+            "Agriculture": ["agriculture", "farm", "farming", "crop", "agri", "agritech", "soil", "harvest", "livestock", "dairy", "irrigation", "fertilizer", "seed", "organic farming", "precision agriculture"],
+            "Entertainment & Media": ["entertainment", "media", "music", "video", "streaming", "content", "creator", "social media", "podcast", "film", "movie", "gaming", "game", "esports", "animation", "vlog", "influencer", "short video"]
         };
 
         const scores = Object.entries(INDUSTRY_KEYWORDS).map(([ind, keywords]) => {
             let score = 0;
             keywords.forEach(kw => {
                 if (text.includes(kw)) {
-                    score += 1;
+                    score += kw.length > 4 ? 2 : 1;
                 }
             });
             return { ind, score };
