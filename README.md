@@ -1,4 +1,3 @@
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/d67f0c38-fd03-40eb-8e58-6117ef5f940d" /><!--
 ---
 title: StartupLens
 emoji: 🔎
