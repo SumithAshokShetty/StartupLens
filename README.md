@@ -182,7 +182,7 @@ npm run dev
 ---
 
 ## 🔗 Project Links
-- **Demo Video Link**: [Video Presentation](https://drive.google.com/drive/folders/16aKR0AUHuU9CPdvqK4Y6yJVSY5uioQWS)
+- **Demo Video Link**: [Video Presentation](https://drive.google.com/drive/u/0/folders/1Fiobl0-W6ajw6asrBZznjJ7qF0629BAj)
 - **Live Deployed Application**: [https://startup-lens-eight.vercel.app](https://startup-lens-eight.vercel.app/)
 
 ---
